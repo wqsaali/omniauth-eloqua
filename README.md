@@ -1,6 +1,6 @@
-#Surveymonkey Strategy for OmniAuth
+# Eloqua Strategy for OmniAuth
 
-SurveyMonkey OAuth2 strategy for OmniAuth.
+Eloqua OAuth2 strategy for OmniAuth.
 ## Get Started
 ```ruby
 gem 'omniauth-eloqua'
