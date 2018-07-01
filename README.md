@@ -21,7 +21,7 @@ If you want to put custom `redirect_uri`, pass it as params
       provider :eloqua, CLIENT_APP_ID, CLIENT_APP_SECRET, redirect_uri: 'SOME_URL'
     end
 
-#License
+# License
 
 Copyright (c) 2018 Waqas Ali
 
