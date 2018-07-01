@@ -15,7 +15,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["wqsaali@gmail.com"]
   gem.description   = %q{An OmniAuth strategy for authenticating with the Eloqua REST API.}
   gem.summary       = %q{OmniAuth strategy for authenticating with Eloqua.}
-  gem.homepage      = "https://github.com/wqsaali/eloqua-omniauth"
+  gem.homepage      = "https://github.com/wqsaali/omniauth-eloqua"
   gem.license       = "GPL v3"
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
