@@ -25,7 +25,7 @@ module OmniAuth
       def request_phase
         redirect client.auth_code.authorize_url(
           {
-            redirect_uri: "#{options[:redirect_uri]}?response_type=code&state="\
+            redirect_uri: "#{callback_url}?response_type=code&state="\
               "#{request.params['state']}"
           }.merge(
             options.authorize_params
@@ -54,19 +54,12 @@ module OmniAuth
             req.headers['Authorization'] = "Basic #{token}"
             req.body = "{ 'grant_type': 'authorization_code', 'code': "\
               "'#{request.params["code"]}', 'redirect_uri': "\
-              "'#{options[:redirect_uri]}?response_type=code&state="\
+              "'#{callback_url}?response_type=code&state="\
               "#{request.params['state']}' }"
           end
-
+          @access_token = result
           result = JSON.parse(result.body)
-
-          env['omniauth.auth'] = {
-            credentials: {
-              token: result["access_token"],
-              refresh_token: result["refresh_token"],
-              expires_in: result["expires_in"]
-            }
-          }
+          env['omniauth.auth'] = auth_hash(result)
           call_app!
         end
       rescue ::OAuth2::Error, CallbackError => e
@@ -77,11 +70,51 @@ module OmniAuth
         fail!(:failed_to_connect, e)
       end
 
-      def auth_hash
-        hash = AuthHash.new(:provider => name, :uid => uid)
-        hash.info = info unless skip_info?
-        hash.credentials = credentials if credentials
+      def auth_hash(result)
+        detail = detail(result)
+        hash = AuthHash.new(:provider => name, :uid => detail.uid)
+        hash.info = detail.info unless skip_info?
+        hash.credentials = AuthHash::InfoHash.new({
+          token: result["access_token"],
+          refresh_token: result["refresh_token"],
+          expires_in: result["expires_in"]
+        })
+        hash.extra = detail.extra
         hash
+      end
+
+      private
+
+      def callback_url
+        options[:redirect_uri] || (full_host + script_name + callback_path)
+      end
+
+      def detail(result)
+        return {} if result.dig('access_token').blank?
+        conn = Faraday.new(:url => 'https://login.eloqua.com/id') do |faraday|
+          faraday.response :logger
+          faraday.adapter  Faraday.default_adapter
+        end
+        result = conn.get do |req|
+          req.headers['Content-Type'] = 'application/json'
+          req.headers['Authorization'] = "Bearer #{result['access_token']}"
+        end
+        result = JSON.parse(result.body)
+        AuthHash::InfoHash.new(
+          uid: result.dig('site', 'id'),
+          info: {
+            id: result.dig('user', 'id'),
+            nickname: result.dig('user', 'username'),
+            email: result.dig('user', 'emailAddress'),
+            first_name: result.dig('user', 'firstName'),
+            last_name:  result.dig('user', 'lastName'),
+            name: result.dig('user', 'displayName'),
+            urls: result.dig('urls')
+          },
+          extra: {
+            site: result.dig('site')
+          }
+        )
       end
     end
   end
