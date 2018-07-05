@@ -77,7 +77,7 @@ module OmniAuth
         hash.credentials = AuthHash::InfoHash.new({
           token: result["access_token"],
           refresh_token: result["refresh_token"],
-          expires_in: result["expires_in"]
+          expires_at: result["expires_in"]
         })
         hash.extra = detail.extra
         hash
