@@ -59,8 +59,12 @@ module OmniAuth
           end
           @access_token = result
           result = JSON.parse(result.body)
-          env['omniauth.auth'] = auth_hash(result)
-          call_app!
+          if @access_token.status != 200
+            fail!(result['error'], Exception.new(result['error_description']))
+          else
+            env['omniauth.auth'] = auth_hash(result)
+            call_app!
+          end
         end
       rescue ::OAuth2::Error, CallbackError => e
         fail!(:invalid_credentials, e)
