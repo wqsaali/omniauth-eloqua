@@ -95,29 +95,33 @@ module OmniAuth
       end
 
       def detail(result)
-        return {} if result.dig('access_token').blank?
+        return {} if result['access_token'].blank?
+
         conn = Faraday.new(:url => 'https://login.eloqua.com/id') do |faraday|
           faraday.response :logger
           faraday.adapter  Faraday.default_adapter
         end
+
         result = conn.get do |req|
           req.headers['Content-Type'] = 'application/json'
           req.headers['Authorization'] = "Bearer #{result['access_token']}"
         end
+
         result = JSON.parse(result.body)
+
         AuthHash::InfoHash.new(
-          uid: result.dig('site', 'id'),
+          uid: result['site'] && result['site']['id'],
           info: {
-            id: result.dig('user', 'id'),
-            nickname: result.dig('user', 'username'),
-            email: result.dig('user', 'emailAddress'),
-            first_name: result.dig('user', 'firstName'),
-            last_name:  result.dig('user', 'lastName'),
-            name: result.dig('user', 'displayName'),
-            urls: result.dig('urls')
+            id:         result['user'] && result['user']['id'],
+            nickname:   result['user'] && result['user']['username'],
+            email:      result['user'] && result['user']['emailAddress'],
+            first_name: result['user'] && result['user']['firstName'],
+            last_name:  result['user'] && result['user']['lastName'],
+            name:       result['user'] && result['user']['displayName'],
+            urls:       result['urls']
           },
           extra: {
-            site: result.dig('site')
+            site: result['site']
           }
         )
       end
